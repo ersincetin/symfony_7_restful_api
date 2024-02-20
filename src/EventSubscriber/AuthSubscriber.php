@@ -21,6 +21,10 @@ class AuthSubscriber implements EventSubscriberInterface
             } catch (\Exception $exception) {
                 die($exception->getMessage());
             }
+        }else{
+            die([
+                'message'=>'Check your Authorization in headers.'
+            ]);
         }
     }
 
