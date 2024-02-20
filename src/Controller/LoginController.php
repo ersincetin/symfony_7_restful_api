@@ -34,7 +34,7 @@ class LoginController extends AbstractController
                     $audience_claim = 'THE_AUDIENCE';
                     $issuedat_claim = time();
                     $notbefore_claim = $issuedat_claim + 0; /* not before in seconds */
-                    $expire_claim = $issuedat_claim + 3600; /* expire time in seconds */
+                    $expire_claim = $issuedat_claim + 3600000; /* expire time in seconds */
 
                     $payload = [
                         'iss' => $issuer_claim,
