@@ -129,4 +129,28 @@ class RoleController extends AbstractController implements AuthFilterInterface
             ], 404);
         }
     }
+
+    #[Route('roles/{id}/setStatus', name: 'change_role_status', methods: 'PATCH')]
+    public function setStatus(int $id = null)
+    {
+        try {
+            if (!is_null($id) && !is_null($role = $this->repository->find($id))) {
+                $role->setStatus($role->getStatus() ? false : true);
+                $this->entityManager->flush();
+                return $this->json([
+                    'data' => $role->getName() . ' updated set status.',
+                    'message' => 'Successful'
+                ], 200);
+            } else {
+                return $this->json([
+                    'id' => $id ?? null,
+                    'message' => 'Not found user'
+                ], 404);
+            }
+        } catch (\Exception $exception) {
+            return new Response([
+                'message' => $exception->getMessage()
+            ], 404);
+        }
+    }
 }

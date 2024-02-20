@@ -150,4 +150,28 @@ class UserController extends AbstractController implements AuthFilterInterface
             ], 404);
         }
     }
+
+    #[Route('users/{id}/setStatus', name: 'change_user_status', methods: 'PATCH')]
+    public function setStatus(int $id = null)
+    {
+        try {
+            if (!is_null($id) && !is_null($user = $this->repository->find($id))) {
+                $user->setStatus($user->getStatus() ? false : true);
+                $this->entityManager->flush();
+                return $this->json([
+                    'data' => $user->getUsername() . ' updated set status.',
+                    'message' => 'Successful'
+                ], 200);
+            } else {
+                return $this->json([
+                    'id' => $id ?? null,
+                    'message' => 'Not found user'
+                ], 404);
+            }
+        } catch (\Exception $exception) {
+            return new Response([
+                'message' => $exception->getMessage()
+            ], 404);
+        }
+    }
 }
