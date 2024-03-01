@@ -3,175 +3,76 @@
 namespace App\Controller;
 
 use App\Controller\Auth\AuthFilterInterface;
+use App\Dto\Request\User\UserRequestDto;
 use App\Entity\User;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\Concretes\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
 
 class UserController extends AbstractController implements AuthFilterInterface
 {
     private $data = array();
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(private UserService $userService)
     {
-        $this->entityManager = $entityManager;
-        $this->repository = $entityManager->getRepository(User::class);
     }
 
     #[Route('users/{id}', name: 'get_user', methods: 'GET')]
     public function get(int $id = null): JsonResponse
     {
-        try {
-            if (!is_null($id)) {
-                if (!is_null($user = $this->repository->find($id))) {
-                    $this->data = [
-                        'id' => $user->getId(),
-                        'status' => $user->getStatus(),
-                        'role' => $user->getRole()->getName(),
-                        'username' => $user->getUsername(),
-                        'firstname' => $user->getFirstname(),
-                        'lastname' => $user->getLastname(),
-                        'email' => $user->getEmail(),
-                    ];
-                    return $this->json([
-                        'data' => $this->data,
-                        'message' => 'Successful'
-                    ], 200);
-                } else {
-                    return $this->json([
-                        'id' => $id ?? null,
-                        'message' => 'Show for not found user'
-                    ], 404);
-                }
-
-            } else {
-                if (count($users = $this->repository->findAll()) > 0)
-                    foreach ($users as $user) {
-                        array_push($this->data, [
-                            'id' => $user->getId(),
-                            'status' => $user->getStatus(),
-                            'role' => $user->getRole()->getName(),
-                            'username' => $user->getUsername(),
-                            'firstname' => $user->getFirstname(),
-                            'lastname' => $user->getLastname(),
-                            'email' => $user->getEmail(),
-                        ]);
-                    }
-                return $this->json([
-                    'data' => $this->data,
-                    'message' => 'Successful'
-                ], 200);
-            }
-        } catch (\Exception $exception) {
-            return new Response([
-                'message' => $exception->getMessage()
-            ], 404);
-        }
+        if (!is_null($id))
+            return $this->userService->find($id);
+        return $this->userService->findAll();
     }
 
-    #[Route('users', name: 'create_user', methods: 'POST')]
-    public function create(Request $request): JsonResponse
+    #[Route('users', name: 'create_user', methods: 'POST', format: 'JSON')]
+    public function create(
+        #[MapRequestPayload] UserRequestDto $requestDto
+    ): JsonResponse
     {
-        if (strlen($request->getContent()) > 0) {
-            $parameters = json_decode($request->getContent(), true);
-            $user = new User();
-            $user->setStatus($parameters['status']);
-            $user->setRoleId($parameters['roleId']);
-            $user->setUsername($parameters['username']);
-            $user->setFirstname($parameters['firstname']);
-            $user->setLastname($parameters['lastname']);
-            $user->setEmail($parameters['email']);
-            $user->setPassword($parameters['password']);
-            $user->setCreatedAt(new \DateTime());
-            $this->entityManager->persist($user);
-            $this->entityManager->flush();
-
-            return $this->json([
-                'data' => $user->getUsername() . ' created.',
-                'message' => 'Successful'
-            ], 201);
-        } else {
-            return $this->json([
-                'message' => 'Please check your request body'
-            ], 404);
-        }
+        return $this->userService->create($requestDto);
     }
 
     #[Route('users/{id}', name: 'update_user', methods: 'PUT')]
-    public function update(Request $request, int $id = null)
+    public function update(
+        #[MapRequestPayload] UserRequestDto $requestDto,
+        int                                 $id = null
+    ): JsonResponse
     {
-        if (strlen($request->getContent()) > 0 && !is_null($id) && !is_null($user = $this->repository->find($id))) {
-            $parameters = json_decode($request->getContent(), true);
-            $user->setStatus($parameters['status']);
-            $user->setRoleId($parameters['roleId']);
-            $user->setUsername($parameters['username']);
-            $user->setFirstname($parameters['firstname']);
-            $user->setLastname($parameters['lastname']);
-            $user->setEmail($parameters['email']);
-            $user->setPassword($parameters['password']);
-            $user->setUpdatedAt(new \DateTime());
-            $this->entityManager->flush();
-
-            return $this->json([
-                'data' => $user->getUsername() . ' updated.',
-                'message' => 'Successful'
-            ], 200);
-        } else {
-            return $this->json([
-                'id' => $id,
-                'message' => 'Update for not found user'
-            ], 404);
-        }
+        return $this->userService->update($requestDto, $id);
     }
 
     #[Route('users/{id}', name: 'delete_user', methods: 'DELETE')]
     public function delete(int $id = null)
     {
-        try {
-            if (!is_null($id) && !is_null($user = $this->repository->find($id))) {
-                $user->setDeletedAt(new \DateTime());
-                $this->entityManager->flush();
-                return $this->json([
-                    'data' => $user->getUsername() . ' deleted.',
-                    'message' => 'Successful'
-                ], 200);
-            } else {
-                return $this->json([
-                    'id' => $id,
-                    'message' => 'Delete for not found user'
-                ], 404);
-            }
-        } catch (\Exception $exception) {
-            return new Response([
-                'message' => $exception->getMessage(),
-            ], 404);
-        }
+        return $this->userService->delete($id);
     }
 
     #[Route('users/{id}/setStatus', name: 'change_user_status', methods: 'PATCH')]
-    public function setStatus(int $id = null)
+    public function setStatus(int $id = null): JsonResponse
     {
-        try {
-            if (!is_null($id) && !is_null($user = $this->repository->find($id))) {
-                $user->setStatus($user->getStatus() ? false : true);
+        return $this->userService->setStatus($id);
+    }
+
+    private function random_add_user($piece = null)
+    {
+        if (!is_null($piece))
+            for ($i = 8800; $i < 10000; $i++) {
+                $user = new User();
+                $user->setStatus(false);
+                $user->setSex('M');
+                $user->setUsername('username_' . ($i + 1));
+                $user->setFirstname('firstname_' . ($i + 1));
+                $user->setSecondName(isset($parameters['second_name']) ?? null);
+                $user->setLastname('lastname_' . ($i + 1));
+                $user->setEmail('email_' . ($i + 1) . '@gmail.com');
+                $user->setPassword('123456');
+                $user->setPhotoUrl(isset($parameters['photo_url']) ?? null);
+                $user->setCreatedAt(new  \DateTime());
+                $this->entityManager->persist($user);
                 $this->entityManager->flush();
-                return $this->json([
-                    'data' => $user->getUsername() . ' updated set status.',
-                    'message' => 'Successful'
-                ], 200);
-            } else {
-                return $this->json([
-                    'id' => $id ?? null,
-                    'message' => 'Not found user'
-                ], 404);
             }
-        } catch (\Exception $exception) {
-            return new Response([
-                'message' => $exception->getMessage()
-            ], 404);
-        }
     }
 }

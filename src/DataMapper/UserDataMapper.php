@@ -29,7 +29,6 @@ use Symfony\Component\Serializer\Serializer;
         $dto->setSecondName($entity->getSecondName());
         $dto->setLastname($entity->getLastname());
         $dto->setEmail($entity->getEmail());
-//        $dto->setLastLoginAt($entity->getLastLoginAt());
 
         return $this->serializer->serialize($dto, 'json');
     }
