@@ -1,21 +1,34 @@
 <?php
 
-namespace App\Entity;
+namespace App\Dto\Response\Role;
 
-use App\Repository\RoleRepository;
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
-
-#[ORM\Entity(repositoryClass: RoleRepository::class)]
-#[ORM\Table(name: 'roles')]
-class Role extends BaseEntity
+class RoleResponseDto
 {
-    #[ORM\Column(name: 'is_admin', type: Types::SMALLINT, length: 1)]
-    private ?int $is_admin = 0;
-    #[ORM\Column(name: 'name', type: Types::STRING, length: 32)]
+    private int $id;
+    private ?bool $status;
+    private ?int $is_admin;
     private string $name;
-    #[ORM\Column(name: 'permissions', type: Types::TEXT)]
-    private ?string $permissions = null;
+    private ?string $permissions;
+
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
+    public function setId(int $id): void
+    {
+        $this->id = $id;
+    }
+
+    public function getStatus(): ?bool
+    {
+        return $this->status;
+    }
+
+    public function setStatus(?bool $status): void
+    {
+        $this->status = $status;
+    }
 
     public function getIsAdmin(): ?int
     {
